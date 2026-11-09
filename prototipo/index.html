@@ -1,0 +1,213 @@
+<meta charset="utf-8">
+<title>PiscIA Tablero</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: app móvil del productor; columna de 30rem centrada, navegación inferior fija, tarjetas solo para unidades y alertas */
+:root{
+  --bg:#eef3f2; --surface:#ffffff; --ink:#10302f; --muted:#56706d; --line:#d3dfdc;
+  --accent:#0d6e6a; --accent-soft:#d7ecea;
+  --ok:#2e7d4f; --warn:#b7791f; --crit:#c0392b;
+  --ok-bg:#e3f3e8; --warn-bg:#fbf0dc; --crit-bg:#fbe4e1;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1a1a; --surface:#132625; --ink:#e3efed; --muted:#9db5b1; --line:#24403e;
+  --accent:#4fb8b1; --accent-soft:#18403e;
+  --ok:#6cc58f; --warn:#e2b04f; --crit:#ef7a6c;
+  --ok-bg:#163527; --warn-bg:#3a2e14; --crit-bg:#3d1c18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1a1a; --surface:#132625; --ink:#e3efed; --muted:#9db5b1; --line:#24403e;
+  --accent:#4fb8b1; --accent-soft:#18403e;
+  --ok:#6cc58f; --warn:#e2b04f; --crit:#ef7a6c;
+  --ok-bg:#163527; --warn-bg:#3a2e14; --crit-bg:#3d1c18; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);margin:0}
+.wrap{max-width:30rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 110px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:1.9rem;font-weight:700}
+h2{font-size:1.35rem;font-weight:600}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+button,.btn{font:600 1rem var(--f-body);border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);padding:.7rem 1rem;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+.btn.ghost,button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.pill{font:600 .78rem var(--f-body);padding:.2rem .6rem;border-radius:999px;white-space:nowrap}
+.ok{background:var(--ok-bg);color:var(--ok)} .warn{background:var(--warn-bg);color:var(--warn)} .crit{background:var(--crit-bg);color:var(--crit)}
+.unit{display:grid;grid-template-columns:6px 1fr;gap:0;padding:0;overflow:hidden;cursor:pointer;text-align:left;width:100%;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.unit .stripe.ok{background:var(--ok)} .unit .stripe.warn{background:var(--warn)} .unit .stripe.crit{background:var(--crit)}
+.unit .body{padding:12px 14px;min-width:0}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.metric .v{font:600 1.35rem var(--f-display);font-variant-numeric:tabular-nums}
+.metric .u{font-size:.8rem;color:var(--muted)}
+.big{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.big .card{padding:12px}
+.big .v{font:700 2rem/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:11px var(--f-mono)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{padding:.35rem .7rem;font-size:.85rem}
+.alert{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.mono{font-family:var(--f-mono);font-size:.85rem}
+label{font-weight:600;font-size:.9rem}
+input,select{font:1rem var(--f-body);padding:.55rem .7rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);width:100%}
+.field{display:flex;flex-direction:column;gap:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+nav.bottom{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+  padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));display:flex;justify-content:center;gap:4px;z-index:5}
+nav.bottom a{flex:1;max-width:7rem;text-align:center;color:var(--muted);text-decoration:none;font:600 .8rem var(--f-body);padding:6px 4px;border-radius:8px}
+nav.bottom a[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+.whats{background:var(--ok-bg);border-radius:12px 12px 12px 2px;padding:10px 12px;font-size:.92rem;max-width:22rem}
+.note{font-size:.8rem;color:var(--muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.tbl th,.tbl td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+.tbl td.num{font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.logo{font:700 2.6rem/1 var(--f-display);letter-spacing:.02em;color:var(--accent)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:10px;font-weight:600;z-index:9}
+@media (prefers-reduced-motion:no-preference){.view{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}}
+</style>
+
+<div class="wrap" id="app"></div>
+<nav class="bottom" id="nav" hidden>
+  <a href="#tablero" data-r="tablero">Tablero</a>
+  <a href="#alertas" data-r="alertas">Alertas</a>
+  <a href="#umbrales" data-r="umbrales">Umbrales</a>
+  <a href="#kits" data-r="kits">Kits</a>
+</nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// Datos de ejemplo del prototipo (no son mediciones reales)
+const units=[
+ {id:'J3',name:'Jaula 3',farm:'Granja El Remanso · Yaguará',od:2.9,t:29.4,ph:7.6,state:'crit',kit:'KIT-0007',bat:78,signal:'Intermitente',last:'hace 2 min'},
+ {id:'J5',name:'Jaula 5',farm:'Granja El Remanso · Yaguará',od:4.1,t:28.7,ph:7.4,state:'warn',kit:'KIT-0008',bat:91,signal:'Buena',last:'hace 1 min'},
+ {id:'E1',name:'Estanque 1',farm:'Granja El Remanso · Yaguará',od:6.2,t:27.9,ph:7.2,state:'ok',kit:'KIT-0011',bat:64,signal:'Buena',last:'hace 3 min'},
+];
+let th={odMin:3.5,tMin:24,tMax:32,phMin:6.5,phMax:8.5};
+const alerts=[
+ {sev:'crit',unit:'Jaula 3',time:'Hoy 04:12',msg:'Oxígeno disuelto 2,9 mg/L (umbral 3,5). WhatsApp entregado a 2 personas en 40 s.',ack:false},
+ {sev:'warn',unit:'Jaula 5',time:'Hoy 03:55',msg:'Oxígeno disuelto 4,1 mg/L, bajando 0,3 mg/L por hora.',ack:false},
+ {sev:'crit',unit:'Jaula 3',time:'Ayer 05:02',msg:'Oxígeno disuelto 3,2 mg/L. WhatsApp sin confirmar; SMS de respaldo enviado a los 3 min.',ack:true},
+ {sev:'warn',unit:'Estanque 1',time:'Lun 14:30',msg:'Temperatura 31,6 °C, cerca del máximo (32 °C).',ack:true},
+];
+// Serie de 24 h para la gráfica: oxígeno con caída de madrugada
+function serie(base,drop){const a=[];for(let h=0;h<=24;h++){const night=Math.exp(-Math.pow((h-4.5)/2.6,2));a.push(+(base+1.6*Math.sin((h-9)/24*2*Math.PI)-drop*night).toFixed(2))}return a}
+const series={J3:serie(5.4,2.6),J5:serie(5.6,1.6),E1:serie(6.6,0.8)};
+const lbl={ok:'Normal',warn:'Atención',crit:'Crítico'};
+const fmt=n=>String(n).replace('.',',');
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.k);toast.k=setTimeout(()=>t.hidden=true,2200)}
+
+function chart(data,thr){
+  const W=340,H=170,p={l:30,r:10,t:10,b:24},max=9,min=0;
+  const x=i=>p.l+i*(W-p.l-p.r)/24, y=v=>p.t+(max-v)*(H-p.t-p.b)/(max-min);
+  let g='';
+  for(const v of [0,3,6,9]) g+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${p.l-6}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+  for(const h of [0,6,12,18,24]) g+=`<text x="${x(h)}" y="${H-6}" text-anchor="middle">${String(h).padStart(2,'0')}h</text>`;
+  const pts=data.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  const area=`${p.l},${y(0)} ${pts} ${x(24)},${y(0)}`;
+  const minI=data.indexOf(Math.min(...data));
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Oxígeno disuelto en las últimas 24 horas">
+   ${g}<polygon points="${area}" fill="var(--accent-soft)"/>
+   <line x1="${p.l}" x2="${W-p.r}" y1="${y(thr)}" y2="${y(thr)}" stroke="var(--crit)" stroke-dasharray="4 3"/>
+   <text x="${W-p.r}" y="${y(thr)-4}" text-anchor="end" style="fill:var(--crit)">umbral ${fmt(thr)}</text>
+   <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+   <circle cx="${x(minI)}" cy="${y(data[minI])}" r="4" fill="var(--crit)"/>
+  </svg>`;
+}
+
+const views={
+ inicio(){return `<div class="stack view" style="padding-top:8vh">
+   <div class="logo">PiscIA</div>
+   <p class="muted" style="margin:0">Monitoreo del agua para cultivos de tilapia. Ingrese con el celular registrado de la granja.</p>
+   <form class="stack card" id="login">
+     <div class="field"><label for="cel">Celular</label><input id="cel" inputmode="tel" value="310 555 0142"></div>
+     <div class="field"><label for="code">Código de acceso (llega por WhatsApp)</label><input id="code" inputmode="numeric" value="482913"></div>
+     <button type="submit">Ingresar</button>
+   </form>
+   <p class="note">Prototipo navegable del PMV con datos de ejemplo. Proyecto académico, FET · Ingeniería de Software.</p></div>`},
+ tablero(){const crit=units.filter(u=>u.state!=='ok').length;
+  return `<div class="stack view">
+   <div><div class="eyebrow">Granja El Remanso · Yaguará</div><h1>Tablero</h1></div>
+   <div class="card ${crit?'crit':''}" style="border:none"><strong>${crit} de ${units.length} unidades requieren atención.</strong> Última sincronización hace 1 min.</div>
+   ${units.map(u=>`<button class="unit card" data-go="unidad-${u.id}"><span class="stripe ${u.state}"></span><span class="body">
+     <span class="row between"><h3>${u.name}</h3><span class="pill ${u.state}">${lbl[u.state]}</span></span>
+     <span class="metrics">
+      <span class="metric"><span class="v">${fmt(u.od)}</span> <span class="u">mg/L O₂</span></span>
+      <span class="metric"><span class="v">${fmt(u.t)}</span> <span class="u">°C</span></span>
+      <span class="metric"><span class="v">${fmt(u.ph)}</span> <span class="u">pH</span></span>
+     </span>
+     <span class="note">Kit ${u.kit} · ${u.last}</span></span></button>`).join('')}
+  </div>`},
+ unidad(id){const u=units.find(x=>x.id===id)||units[0];
+  return `<div class="stack view">
+   <a href="#tablero" class="note">← Volver al tablero</a>
+   <div class="row between"><div><div class="eyebrow">${u.farm}</div><h1>${u.name}</h1></div><span class="pill ${u.state}">${lbl[u.state]}</span></div>
+   <div class="big">
+    <div class="card"><div class="eyebrow">Oxígeno</div><div class="v" style="color:var(--${u.state==='ok'?'ink':u.state})">${fmt(u.od)}</div><div class="note">mg/L · mín. ${fmt(th.odMin)}</div></div>
+    <div class="card"><div class="eyebrow">Temp.</div><div class="v">${fmt(u.t)}</div><div class="note">°C · ${th.tMin}–${th.tMax}</div></div>
+    <div class="card"><div class="eyebrow">pH</div><div class="v">${fmt(u.ph)}</div><div class="note">${fmt(th.phMin)}–${fmt(th.phMax)}</div></div>
+   </div>
+   <div class="card stack"><div class="row between"><h2>Oxígeno, últimas 24 h</h2></div>${chart(series[u.id],th.odMin)}
+    <p class="note" style="margin:0">El punto rojo marca el mínimo del día. Las caídas suelen ocurrir de madrugada.</p></div>
+   <div class="card stack"><h2>Último aviso enviado</h2>
+    <div class="whats">⚠️ <strong>PiscIA</strong>: ${u.name} con oxígeno en ${fmt(u.od)} mg/L (umbral ${fmt(th.odMin)}). Revise aireación. Responda OK para confirmar.</div>
+    <div class="note">Canal: WhatsApp · Respaldo: SMS si no hay confirmación en 3 min</div></div>
+   <div class="card"><div class="row between"><span>Kit ${u.kit}</span><span class="note">Batería ${u.bat} % · Señal ${u.signal}</span></div></div>
+  </div>`},
+ alertas(){return `<div class="stack view">
+   <div><div class="eyebrow">Historial</div><h1>Alertas</h1></div>
+   ${alerts.map((a,i)=>`<div class="card alert"><span class="pill ${a.sev}">${a.sev==='crit'?'Crítica':'Atención'}</span>
+    <div style="min-width:0"><div class="row between"><strong>${a.unit}</strong><span class="note">${a.time}</span></div>
+    <div>${a.msg}</div>
+    ${a.ack?'<div class="note">Confirmada por el productor</div>':`<button class="ghost" style="margin-top:8px" data-ack="${i}">Marcar como atendida</button>`}</div></div>`).join('')}
+  </div>`},
+ umbrales(){return `<div class="stack view">
+   <div><div class="eyebrow">Configuración por granja</div><h1>Umbrales</h1></div>
+   <p class="muted" style="margin:0">Cuando una medición cruce estos valores, PiscIA envía la alerta. Defínalos con su asesor acuícola.</p>
+   <form class="card stack" id="thf">
+    <div class="field"><label for="odMin">Oxígeno disuelto mínimo (mg/L)</label><input id="odMin" type="number" step="0.1" value="${th.odMin}"></div>
+    <div class="grid2"><div class="field"><label for="tMin">Temp. mínima (°C)</label><input id="tMin" type="number" value="${th.tMin}"></div>
+     <div class="field"><label for="tMax">Temp. máxima (°C)</label><input id="tMax" type="number" value="${th.tMax}"></div></div>
+    <div class="grid2"><div class="field"><label for="phMin">pH mínimo</label><input id="phMin" type="number" step="0.1" value="${th.phMin}"></div>
+     <div class="field"><label for="phMax">pH máximo</label><input id="phMax" type="number" step="0.1" value="${th.phMax}"></div></div>
+    <div class="field"><label for="dest">Enviar alertas a</label><select id="dest"><option>Dueño y administrador</option><option>Solo administrador</option><option>Todo el personal</option></select></div>
+    <button type="submit">Guardar umbrales</button>
+   </form></div>`},
+ kits(){return `<div class="stack view">
+   <div><div class="eyebrow">Administración PiscIA</div><h1>Estado de kits</h1></div>
+   <div class="card scroll"><table class="tbl"><thead><tr><th>Kit</th><th>Unidad</th><th>Batería</th><th>Señal</th><th>Calibración</th></tr></thead><tbody>
+    ${units.map((u,i)=>`<tr><td class="mono">${u.kit}</td><td>${u.name}</td><td class="num">${u.bat} %</td><td>${u.signal}</td><td><span class="pill ${i===2?'warn':'ok'}">${i===2?'Vence en 3 días':'Al día'}</span></td></tr>`).join('')}
+   </tbody></table></div>
+   <p class="note" style="margin:0">Vista del técnico de instalación: programa visitas de calibración mensual y revisa la batería y la señal de cada nodo.</p>
+  </div>`}
+};
+
+function render(){
+  const h=(location.hash||'#inicio').slice(1);
+  const [r,id]=h.split('-');
+  const v=views[r]?r:'inicio';
+  document.getElementById('app').innerHTML=views[v](id);
+  document.getElementById('nav').hidden=(v==='inicio');
+  document.querySelectorAll('nav a').forEach(a=>{if(a.dataset.r===(v==='unidad'?'tablero':v))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  window.scrollTo(0,0);
+}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){location.hash=g.dataset.go;return}
+  const a=e.target.closest('[data-ack]'); if(a){alerts[+a.dataset.ack].ack=true;render();toast('Alerta marcada como atendida')}
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='login'){location.hash='tablero'}
+  if(e.target.id==='thf'){for(const k of ['odMin','tMin','tMax','phMin','phMax'])th[k]=parseFloat(document.getElementById(k).value);toast('Umbrales guardados')}
+});
+window.addEventListener('hashchange',render);
+render();
+</script>

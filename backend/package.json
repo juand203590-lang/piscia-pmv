@@ -1,0 +1,16 @@
+{
+  "name": "piscia-backend",
+  "version": "0.1.0",
+  "description": "API y motor de alertas del PMV de PiscIA",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "simular": "node ../simulador/simulador.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mqtt": "^5.7.0"
+  },
+  "license": "MIT"
+}
